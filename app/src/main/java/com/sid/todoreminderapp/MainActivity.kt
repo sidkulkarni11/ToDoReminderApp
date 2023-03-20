@@ -1,13 +1,16 @@
 package com.sid.todoreminderapp
 
-import android.app.DatePickerDialog
-import android.app.TimePickerDialog
+import android.app.*
+import android.content.Context
+import android.content.Intent
+import android.os.Build
 import android.os.Bundle
 import android.widget.DatePicker
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
+import androidx.annotation.RequiresApi
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -37,6 +40,7 @@ import com.sid.todoreminderapp.model.Task
 import com.sid.todoreminderapp.model.TaskPriority
 import com.sid.todoreminderapp.ui.theme.ToDoReminderAppTheme
 import dagger.hilt.android.AndroidEntryPoint
+import java.text.SimpleDateFormat
 import java.util.*
 
 @AndroidEntryPoint
@@ -204,24 +208,7 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DetailsContent() {
         var showDialog by remember { mutableStateOf(false) }
-        var taskNameText by remember { mutableStateOf(TextFieldValue()) }
-        var isChecked by remember { mutableStateOf(false) }
-        var taskreminderDate by remember {
-            mutableStateOf("")
-        }
-        var taskreminderTime by remember {
-            mutableStateOf("")
-        }
 
-        var errorMessage by remember {
-            mutableStateOf("")
-        }
-
-        var taskDescriptionText by remember {
-            mutableStateOf(
-                TextFieldValue()
-            )
-        }
         val mytask by taskViewModel.getTasks().collectAsState(initial = emptyList())
 
         Box(modifier = Modifier.fillMaxSize()) {
@@ -246,7 +233,25 @@ class MainActivity : ComponentActivity() {
             )
 
             if (showDialog) {
+                var taskNameText by remember { mutableStateOf(TextFieldValue()) }
+                var isChecked by remember { mutableStateOf(false) }
+                var taskreminderDate by remember {
+                    mutableStateOf("")
+                }
+                var taskreminderTime by remember {
+                    mutableStateOf("")
+                }
 
+                var errorMessage by remember {
+                    mutableStateOf("")
+                }
+
+                var taskDescriptionText by remember {
+                    mutableStateOf(
+                        TextFieldValue()
+                    )
+                }
+                var alertDialogContext = LocalContext.current
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
                     title = { Text(text = "Alert") },
@@ -304,7 +309,15 @@ class MainActivity : ComponentActivity() {
                                 val mDatePickerDialog = DatePickerDialog(
                                     mContext,
                                     { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
-                                        mDate.value = "$mDayOfMonth-${mMonth + 1}-$mYear"
+//                                        mDate.value = "$mDayOfMonth-${mMonth + 1}-$mYear"
+                                        var cal =  Calendar.getInstance()
+                                        cal[Calendar.YEAR] = mYear
+                                        cal[Calendar.MONTH] = mMonth
+                                        cal[Calendar.DAY_OF_MONTH] = mDayOfMonth
+
+                                        var calDate = calendarToDate(cal)
+                                        var dateString = dateToString(calDate,"dd-MM-yyyy")
+                                        mDate.value = dateString
                                     }, mYear, mMonth, mDay
                                 )
 
@@ -346,7 +359,13 @@ class MainActivity : ComponentActivity() {
                                 val mTimePickerDialog = TimePickerDialog(
                                     mContext,
                                     { _, mHour: Int, mMinute: Int ->
-                                        mTime.value = "$mHour:$mMinute"
+                                        var cal =  Calendar.getInstance()
+                                        cal[Calendar.HOUR] = mHour
+                                        cal[Calendar.MINUTE] = mMinute
+
+                                        var calTime = calendarToDate(cal)
+                                        var calString = dateToString(calTime,"HH : mm")
+                                        mTime.value = calString
                                     }, mHour, mMinute, false
                                 )
 
@@ -400,8 +419,8 @@ class MainActivity : ComponentActivity() {
                                                         taskDueTime = taskreminderTime
                                                     )
 
-                                                    taskViewModel.insertTask(saveTask)
-
+//                                                    taskViewModel.insertTask(saveTask)
+                                                    setAlarm(task = saveTask, context = alertDialogContext )
                                                 } else {
                                                     errorMessage = "Please enter reminder time"
                                                 }
@@ -455,4 +474,89 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
+
+    fun setAlarm(task: Task,context: Context){
+        var taskDateString = task.taskDueDate + " "+ task.taskDueTime
+        var taskDate = stringToDate(taskDateString)
+
+        val taskCalendar = Calendar.getInstance()
+        taskCalendar.time = taskDate
+
+//        var taskDateS = dateToString(taskStringDate,"dd-MM-yyyy HH:mm")
+//        Log.d("****Date",taskDateS)
+//        var context = LocalContext.current
+
+        val alarmManager =
+            context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+        val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
+
+        val bundle = Bundle().apply {
+            putSerializable("taskobj", task)
+        }
+        alarmIntent.putExtras(bundle)
+
+        val pendingIntent =
+            PendingIntent.getService(context, task.taskId.toInt(), alarmIntent,
+                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
+        if (pendingIntent != null && alarmManager != null) {
+            alarmManager.cancel(pendingIntent)
+        }
+
+
+
+        alarmManager?.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, taskCalendar.timeInMillis, pendingIntent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(context, task = task)
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel(context: Context, task: Task) {
+        val channelId = task.taskId.toString()
+        val channelName = task.taskName
+        val channelDesc = task.taskDescription
+        val importance = NotificationManager.IMPORTANCE_HIGH
+        val channel = NotificationChannel(channelId, channelName, importance).apply {
+            description = channelDesc
+        }
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
+    }
+
+
+    fun setNotificationAlarm(task: Task,context: Context) {
+        /*val dateFormat = "yyyy-MM-dd HH:mm:ss"
+        val formatter = SimpleDateFormat(dateFormat, Locale.getDefault())
+        val date = formatter.parse(dateString)
+
+        val alarmId = task.taskId.toInt()
+
+        val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
+        val pendingIntent = PendingIntent.getBroadcast(context, alarmId, alarmIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_MUTABLE)
+
+        val alarmManager = context.getSystemService(Context.ALARM_SERVICE) as AlarmManager
+
+        alarmManager.setExact(AlarmManager.RTC_WAKEUP, notificationTime.timeInMillis, pendingIntent)
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            createNotificationChannel(context)
+        }*/
+    }
 }
+fun calendarToDate(calendar: Calendar): Date {
+    return calendar.time
+}
+
+fun dateToString(date: Date,dateformat : String): String {
+    val formatter = SimpleDateFormat(dateformat, Locale.getDefault())
+    return formatter.format(date)
+}
+
+fun stringToDate(dateString : String) : Date{
+    val format = SimpleDateFormat("dd-MM-yyyy HH : mm")
+    format.timeZone = TimeZone.getDefault()
+    val date = format.parse(dateString)
+    return date
+}
+
