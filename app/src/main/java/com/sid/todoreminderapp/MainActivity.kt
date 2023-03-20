@@ -2,6 +2,7 @@ package com.sid.todoreminderapp
 
 import android.app.*
 import android.content.Context
+import android.content.Context.ALARM_SERVICE
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -35,6 +36,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.core.content.ContextCompat.getSystemService
 import com.sid.toappdaggerhilt.TaskViewModel
 import com.sid.todoreminderapp.model.Task
 import com.sid.todoreminderapp.model.TaskPriority
@@ -42,6 +44,7 @@ import com.sid.todoreminderapp.ui.theme.ToDoReminderAppTheme
 import dagger.hilt.android.AndroidEntryPoint
 import java.text.SimpleDateFormat
 import java.util.*
+
 
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
@@ -66,9 +69,16 @@ class MainActivity : ComponentActivity() {
             }
         }
 
-
-
-
+        var checkTask = Task(
+            System.currentTimeMillis(),
+            "CheckTask",
+            getTaskPriority(true),
+            "Check Desc",
+            "20-03-2023",
+            "23 : 45"
+        )
+//        setAlarm(checkTask, this)
+        testNotif(this@MainActivity,checkTask)
     }
 
     @Composable
@@ -310,13 +320,13 @@ class MainActivity : ComponentActivity() {
                                     mContext,
                                     { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
 //                                        mDate.value = "$mDayOfMonth-${mMonth + 1}-$mYear"
-                                        var cal =  Calendar.getInstance()
+                                        var cal = Calendar.getInstance()
                                         cal[Calendar.YEAR] = mYear
                                         cal[Calendar.MONTH] = mMonth
                                         cal[Calendar.DAY_OF_MONTH] = mDayOfMonth
 
                                         var calDate = calendarToDate(cal)
-                                        var dateString = dateToString(calDate,"dd-MM-yyyy")
+                                        var dateString = dateToString(calDate, "dd-MM-yyyy")
                                         mDate.value = dateString
                                     }, mYear, mMonth, mDay
                                 )
@@ -359,12 +369,12 @@ class MainActivity : ComponentActivity() {
                                 val mTimePickerDialog = TimePickerDialog(
                                     mContext,
                                     { _, mHour: Int, mMinute: Int ->
-                                        var cal =  Calendar.getInstance()
+                                        var cal = Calendar.getInstance()
                                         cal[Calendar.HOUR] = mHour
                                         cal[Calendar.MINUTE] = mMinute
 
                                         var calTime = calendarToDate(cal)
-                                        var calString = dateToString(calTime,"HH : mm")
+                                        var calString = dateToString(calTime, "HH : mm")
                                         mTime.value = calString
                                     }, mHour, mMinute, false
                                 )
@@ -420,7 +430,10 @@ class MainActivity : ComponentActivity() {
                                                     )
 
 //                                                    taskViewModel.insertTask(saveTask)
-                                                    setAlarm(task = saveTask, context = alertDialogContext )
+                                                    /*setAlarm(
+                                                        task = saveTask,
+                                                        context = alertDialogContext
+                                                    )*/
                                                 } else {
                                                     errorMessage = "Please enter reminder time"
                                                 }
@@ -475,41 +488,7 @@ class MainActivity : ComponentActivity() {
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
 
-    fun setAlarm(task: Task,context: Context){
-        var taskDateString = task.taskDueDate + " "+ task.taskDueTime
-        var taskDate = stringToDate(taskDateString)
 
-        val taskCalendar = Calendar.getInstance()
-        taskCalendar.time = taskDate
-
-//        var taskDateS = dateToString(taskStringDate,"dd-MM-yyyy HH:mm")
-//        Log.d("****Date",taskDateS)
-//        var context = LocalContext.current
-
-        val alarmManager =
-            context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
-        val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
-
-        val bundle = Bundle().apply {
-            putSerializable("taskobj", task)
-        }
-        alarmIntent.putExtras(bundle)
-
-        val pendingIntent =
-            PendingIntent.getService(context, task.taskId.toInt(), alarmIntent,
-                 PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT)
-        if (pendingIntent != null && alarmManager != null) {
-            alarmManager.cancel(pendingIntent)
-        }
-
-
-
-        alarmManager?.setExact(AlarmManager.ELAPSED_REALTIME_WAKEUP, taskCalendar.timeInMillis, pendingIntent)
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            createNotificationChannel(context, task = task)
-        }
-    }
 
     @RequiresApi(Build.VERSION_CODES.O)
     private fun createNotificationChannel(context: Context, task: Task) {
@@ -520,12 +499,14 @@ class MainActivity : ComponentActivity() {
         val channel = NotificationChannel(channelId, channelName, importance).apply {
             description = channelDesc
         }
-        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        val notificationManager =
+            context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.createNotificationChannel(channel)
         notificationManager.createNotificationChannel(channel)
     }
 
 
-    fun setNotificationAlarm(task: Task,context: Context) {
+    fun setNotificationAlarm(task: Task, context: Context) {
         /*val dateFormat = "yyyy-MM-dd HH:mm:ss"
         val formatter = SimpleDateFormat(dateFormat, Locale.getDefault())
         val date = formatter.parse(dateString)
@@ -544,19 +525,132 @@ class MainActivity : ComponentActivity() {
         }*/
     }
 }
+
 fun calendarToDate(calendar: Calendar): Date {
     return calendar.time
 }
 
-fun dateToString(date: Date,dateformat : String): String {
+fun dateToString(date: Date, dateformat: String): String {
     val formatter = SimpleDateFormat(dateformat, Locale.getDefault())
     return formatter.format(date)
 }
 
-fun stringToDate(dateString : String) : Date{
+fun stringToDate(dateString: String): Date {
     val format = SimpleDateFormat("dd-MM-yyyy HH : mm")
     format.timeZone = TimeZone.getDefault()
     val date = format.parse(dateString)
     return date
 }
 
+fun testNotif(context: Context, task: Task) {
+    val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
+
+    val bundle = Bundle().apply {
+        putSerializable("taskobj", task)
+    }
+    alarmIntent.putExtra("bundle", bundle)
+
+    val pendingIntent = PendingIntent.getBroadcast(
+        context,
+        task.taskId.toInt(),
+        alarmIntent,
+        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+    )
+
+    val manager =
+        context.getSystemService(ALARM_SERVICE) as? AlarmManager
+    val calendar = Calendar.getInstance()
+    calendar.timeInMillis = System.currentTimeMillis()
+
+    var taskDateString = task.taskDueDate + " " + task.taskDueTime
+    var taskDate = stringToDate(taskDateString)
+
+    var year = Integer.parseInt(dateToString(taskDate, "yyyy"))
+    var month = Integer.parseInt(dateToString(taskDate, "MM"))
+    var day = Integer.parseInt(dateToString(taskDate, "dd"))
+    var hour = Integer.parseInt(dateToString(taskDate, "HH"))
+    var min = Integer.parseInt(dateToString(taskDate, "mm"))
+
+
+//    calendar[Calendar.YEAR] = year
+//    calendar[Calendar.MONTH] = month
+//    calendar[Calendar.DAY_OF_MONTH] = day
+    calendar[Calendar.HOUR_OF_DAY] = 23
+    calendar[Calendar.MINUTE] = 59
+    calendar[Calendar.SECOND] = 10
+
+    manager!!.setExact(
+        AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
+    )
+}
+
+/*
+fun setAlarm(task: Task, context: Context) {
+
+    */
+/* val `when` = System.currentTimeMillis() + 10000L
+
+     val am = getSystemService(ALARM_SERVICE) as AlarmManager
+     val intent = Intent(this, TaskBroadcastReceiver::class.java)
+     intent.putExtra("myAction", "mDoNotify")
+     val pendingIntent2 = PendingIntent.getBroadcast(this, task.taskId.toInt(), intent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_UPDATE_CURRENT)
+     am[AlarmManager.RTC_WAKEUP, `when`] = pendingIntent2*//*
+
+
+    var taskDateString = task.taskDueDate + " " + task.taskDueTime
+    var taskDate = stringToDate(taskDateString)
+
+    val taskCalendar = Calendar.getInstance()
+    var taskDateS = dateToString(taskDate, "dd-MM-yyyy HH:mm")
+//        Log.d("****Date",taskDateS)
+//        var context = LocalContext.current
+
+
+    taskCalendar.timeInMillis = System.currentTimeMillis()
+    var year = Integer.parseInt(dateToString(taskDate, "yyyy"))
+    var month = Integer.parseInt(dateToString(taskDate, "MM"))
+    var day = Integer.parseInt(dateToString(taskDate, "dd"))
+    var hour = Integer.parseInt(dateToString(taskDate, "HH"))
+    var min = Integer.parseInt(dateToString(taskDate, "mm"))
+
+    taskCalendar[Calendar.YEAR] = year
+    taskCalendar[Calendar.MONTH] = month
+    taskCalendar[Calendar.DAY_OF_MONTH] = day
+    taskCalendar[Calendar.HOUR_OF_DAY] = hour
+    taskCalendar[Calendar.MINUTE] = min
+    taskCalendar[Calendar.SECOND] = 0
+
+    taskCalendar[Calendar.HOUR_OF_DAY] = 19
+    taskCalendar[Calendar.MINUTE] = 24
+    taskCalendar[Calendar.SECOND] = 30
+
+    taskCalendar.set(hour, min, 0)
+//        var str = dateToString(calendarToDate(taskCalendar),"dd-MM-yyyy HH:mm:ss")
+    val alarmManager =
+        context.getSystemService(Context.ALARM_SERVICE) as? AlarmManager
+    val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
+
+    val bundle = Bundle().apply {
+        putSerializable("taskobj", task)
+    }
+    alarmIntent.putExtra("bundle", bundle)
+
+    val pendingIntent =
+        PendingIntent.getBroadcast(
+            context, task.taskId.toInt(), alarmIntent,
+            PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
+        )
+
+    if (pendingIntent != null && alarmManager != null) {
+        alarmManager.cancel(pendingIntent)
+    }
+
+
+
+    alarmManager?.setExact(AlarmManager.RTC_WAKEUP, taskCalendar.timeInMillis, pendingIntent)
+//        alarmManager?.setExact(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + 10000, pendingIntent)
+
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+        createNotificationChannel(context, task = task)
+    }
+}*/

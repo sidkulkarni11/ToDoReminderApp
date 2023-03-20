@@ -1,6 +1,7 @@
 package com.sid.todoreminderapp
 
 import android.app.NotificationManager
+import android.app.PendingIntent
 import android.content.BroadcastReceiver
 import android.content.Context
 import android.content.Intent
@@ -18,7 +19,7 @@ class TaskBroadcastReceiver : BroadcastReceiver() {
 
         var notificationId = System.currentTimeMillis().toInt()
         var contentTitle = "To App Reminder"
-        var contentText = ""
+        var contentText = "TO do"
         var channelId = ""
 
         if(task != null){
@@ -39,6 +40,18 @@ class TaskBroadcastReceiver : BroadcastReceiver() {
             .setPriority(NotificationCompat.PRIORITY_HIGH)
 
         val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
-        task?.taskId?.let { notificationManager.notify(it.toInt(), builder.build()) }
+
+        val notificationIntent = Intent(context, MainActivity::class.java)
+       /* val pendingIntent = PendingIntent.getActivity(context, notificationId, notificationIntent, PendingIntent.FLAG_ONE_SHOT or PendingIntent.FLAG_IMMUTABLE)
+        builder.setContentIntent(pendingIntent)*/
+
+        val pendingIntent = PendingIntent.getActivity(context, task?.taskId!!.toInt(), notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE)
+        builder.setContentIntent(pendingIntent)
+        task?.taskId?.let {
+            notificationManager.notify(it.toInt(), builder.build())
+        }
+        if(task == null){
+            notificationManager.notify(notificationId,builder.build())
+        }
     }
 }
