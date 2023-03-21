@@ -14,6 +14,7 @@
       <change beforePath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/AndroidManifest.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/model/Task.kt" beforeDir="false" afterPath="$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/model/Task.kt" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -31,6 +32,7 @@
       <list>
         <option value="Kotlin Object" />
         <option value="Kotlin Class" />
+        <option value="Kotlin Enum" />
       </list>
     </option>
   </component>
@@ -64,11 +66,12 @@
     <property name="RunOnceActivity.cidr.known.project.marker" value="true" />
     <property name="SHOW_ALL_PROCESSES" value="false" />
     <property name="cidr.known.project.marker" value="true" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/app/src/main/res/layout" />
     <property name="settings.editor.selected.configurable" value="project.propVCSSupport.DirectoryMappings" />
   </component>
   <component name="RecentsManager">
     <key name="CopyFile.RECENT_KEYS">
+      <recent name="C:\Siddhesh Kulkarni\TestProjects\TDR\app\src\main\res\layout" />
       <recent name="C:\Siddhesh Kulkarni\TestProjects\ToDoReminderApp\app\src\main\res\drawable" />
       <recent name="C:\Siddhesh Kulkarni\TestProjects\ToDoReminderApp\app\src\main\java\com\sid\todoreminderapp" />
     </key>
@@ -213,78 +216,48 @@
       <breakpoints>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>437</line>
+          <line>513</line>
           <option name="timeStamp" value="8" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>432</line>
-          <option name="timeStamp" value="10" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
-          <line>22</line>
-          <option name="timeStamp" value="24" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>580</line>
-          <option name="timeStamp" value="25" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>545</line>
-          <option name="timeStamp" value="27" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>539</line>
-          <option name="timeStamp" value="30" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>552</line>
-          <option name="timeStamp" value="32" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
-          <line>16</line>
-          <option name="timeStamp" value="33" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
-          <line>17</line>
-          <option name="timeStamp" value="35" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
-          <line>50</line>
-          <option name="timeStamp" value="36" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>377</line>
-          <option name="timeStamp" value="39" />
-        </line-breakpoint>
-        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>530</line>
+          <line>607</line>
           <option name="timeStamp" value="40" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>523</line>
+          <line>600</line>
           <option name="timeStamp" value="41" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
-          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
-          <line>53</line>
-          <option name="timeStamp" value="42" />
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
+          <line>504</line>
+          <option name="timeStamp" value="44" />
         </line-breakpoint>
         <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
           <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/MainActivity.kt</url>
-          <line>581</line>
-          <option name="timeStamp" value="43" />
+          <line>317</line>
+          <option name="timeStamp" value="45" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
+          <line>114</line>
+          <option name="timeStamp" value="53" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
+          <line>26</line>
+          <option name="timeStamp" value="56" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
+          <line>112</line>
+          <option name="timeStamp" value="60" />
+        </line-breakpoint>
+        <line-breakpoint enabled="true" suspend="THREAD" type="kotlin-line">
+          <url>file://$PROJECT_DIR$/app/src/main/java/com/sid/todoreminderapp/TaskBroadcastReceiver.kt</url>
+          <line>92</line>
+          <option name="timeStamp" value="64" />
         </line-breakpoint>
       </breakpoints>
     </breakpoint-manager>

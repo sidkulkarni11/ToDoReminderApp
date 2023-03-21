@@ -2,7 +2,8 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
     <uses-permission android:name="android.permission.SCHEDULE_EXACT_ALARM"/>
-
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+    <uses-permission android:name="android.permission.ACCESS_NOTIFICATION_POLICY" />
     <application
         android:name=".ToDoReminderApp"
         android:allowBackup="true"
@@ -31,11 +32,11 @@
         </activity>
         <receiver android:name=".TaskBroadcastReceiver"
             android:enabled="true"
-            android:exported="true">
+            android:exported="true"
+            android:permission="android.permission.RECEIVE_BOOT_COMPLETED"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
-                <action android:name="android.intent.action.QUICKBOOT_POWERON" />
-                <action android:name="com.htc.intent.action.QUICKBOOT_POWERON"/>
             </intent-filter>
         </receiver>
 

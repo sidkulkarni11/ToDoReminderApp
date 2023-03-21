@@ -12,4 +12,13 @@ data class Task (
     var taskDescription: String?=null,
     var taskDueDate : String,
     var taskDueTime : String
-) : Serializable
+) : Serializable{
+    constructor(): this(
+        System.currentTimeMillis(),
+        "",
+        TaskPriority.LOWPRORITY,
+        "",
+        "",
+        ""
+    )
+}

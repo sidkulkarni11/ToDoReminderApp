@@ -2,7 +2,6 @@ package com.sid.todoreminderapp
 
 import android.app.*
 import android.content.Context
-import android.content.Context.ALARM_SERVICE
 import android.content.Intent
 import android.os.Build
 import android.os.Bundle
@@ -36,8 +35,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.core.content.ContextCompat.getSystemService
 import com.sid.toappdaggerhilt.TaskViewModel
+import com.sid.todoreminderapp.model.DialogState
 import com.sid.todoreminderapp.model.Task
 import com.sid.todoreminderapp.model.TaskPriority
 import com.sid.todoreminderapp.ui.theme.ToDoReminderAppTheme
@@ -74,96 +73,62 @@ class MainActivity : ComponentActivity() {
             "CheckTask",
             getTaskPriority(true),
             "Check Desc",
-            "20-03-2023",
-            "23 : 45"
+            "21-03-2023",
+            "15 : 32"
         )
 //        setAlarm(checkTask, this)
-        testNotif(this@MainActivity,checkTask)
+//        testNotif(this@MainActivity, checkTask)
+
+
+    }
+    fun testNotif(context: Context, task: Task) {
+        val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
+
+        val bundle = Bundle().apply {
+            putSerializable("taskobj", task)
+        }
+        alarmIntent.putExtra("bundle", bundle)
+
+        val pendingIntent = PendingIntent.getBroadcast(
+            context,
+            task.taskId.toInt(),
+            alarmIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        val manager =
+            context.getSystemService(ALARM_SERVICE) as? AlarmManager
+        val calendar = Calendar.getInstance()
+        calendar.timeInMillis = System.currentTimeMillis()
+
+        var taskDateString = task.taskDueDate + " " + task.taskDueTime
+        var taskDate = stringToDate(taskDateString)
+
+        var year = Integer.parseInt(dateToString(taskDate, "yyyy"))
+        var month = Integer.parseInt(dateToString(taskDate, "MM"))
+        var day = Integer.parseInt(dateToString(taskDate, "dd"))
+        var hour = Integer.parseInt(dateToString(taskDate, "HH"))
+        var min = Integer.parseInt(dateToString(taskDate, "mm"))
+        calendar[Calendar.YEAR] = year
+        calendar[Calendar.MONTH] = month-1
+        calendar[Calendar.DATE] = day
+        calendar[Calendar.HOUR_OF_DAY] = hour
+        calendar[Calendar.MINUTE] = min
+        calendar[Calendar.SECOND] = 0
+
+        manager!!.setExact(
+            AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
+        )
     }
 
     @Composable
     fun ToAddTile(task: Task) {
-        Card(
-            backgroundColor = Color.White,
-            elevation = 4.dp,
-            shape = RoundedCornerShape(8.dp),
-            modifier = Modifier
-                .wrapContentHeight()
-                .padding(16.dp)
-        ) {
-            Column(
-                modifier = Modifier
-                    .padding(16.dp)
-            ) {
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = task.taskName,
-                        modifier = Modifier
-                            .weight(3f)
-                            .height(30.dp)
-                    )
 
-                    Text(
-                        text = getTaskPriority(taskPriority = task.taskPriority),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(30.dp)
-                    )
-
-                }
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    DescriptiondropdownButton(task.taskDescription)
-                }
-                Row(modifier = Modifier.fillMaxWidth()) {
-                    Text(
-                        text = task.taskDueDate,
-                        style = TextStyle(
-                            textAlign = TextAlign.Start
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(30.dp)
-                    )
-                    Text(
-                        text = task.taskDueTime,
-                        style = TextStyle(
-                            textAlign = TextAlign.End
-                        ),
-                        modifier = Modifier
-                            .weight(1f)
-                            .height(30.dp)
-                    )
-                }
-                Row(
-                    modifier = Modifier.fillMaxWidth()
-                ) {
-                    Button(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(10.dp),
-                        onClick = {
-
-                        }) {
-                        Text(text = "Edit")
-                    }
-                    Button(
-                        modifier = Modifier
-                            .weight(1f)
-                            .padding(10.dp),
-                        onClick = {
-                            taskViewModel.deleteUser(task)
-                        }) {
-                        Text(text = "Delete")
-                    }
-                }
-            }
-        }
     }
 
 
     @Composable
     fun DescriptiondropdownButton(taskDescription: String?) {
-
         Column(modifier = Modifier.wrapContentWidth()) {
             var isExpanded by remember { mutableStateOf(false) }
 
@@ -218,13 +183,91 @@ class MainActivity : ComponentActivity() {
     @Composable
     fun DetailsContent() {
         var showDialog by remember { mutableStateOf(false) }
+        var dialogState by remember { mutableStateOf(DialogState.CREATE) }
+        var currentTask by remember { mutableStateOf(Task()) }
 
         val mytask by taskViewModel.getTasks().collectAsState(initial = emptyList())
 
         Box(modifier = Modifier.fillMaxSize()) {
             LazyColumn {
                 items(mytask) { tas ->
-                    ToAddTile(tas)
+                    Card(
+                        backgroundColor = Color.White,
+                        elevation = 4.dp,
+                        shape = RoundedCornerShape(8.dp),
+                        modifier = Modifier
+                            .wrapContentHeight()
+                            .padding(16.dp)
+                    ) {
+                        Column(
+                            modifier = Modifier
+                                .padding(16.dp)
+                        ) {
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = tas.taskName,
+                                    modifier = Modifier
+                                        .weight(3f)
+                                        .height(30.dp)
+                                )
+
+                                Text(
+                                    text = getTaskPriority(taskPriority = tas.taskPriority),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                )
+
+                            }
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                DescriptiondropdownButton(tas.taskDescription)
+                            }
+                            Row(modifier = Modifier.fillMaxWidth()) {
+                                Text(
+                                    text = tas.taskDueDate,
+                                    style = TextStyle(
+                                        textAlign = TextAlign.Start
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                )
+                                Text(
+                                    text = tas.taskDueTime,
+                                    style = TextStyle(
+                                        textAlign = TextAlign.End
+                                    ),
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .height(30.dp)
+                                )
+                            }
+                            Row(
+                                modifier = Modifier.fillMaxWidth()
+                            ) {
+                                Button(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(10.dp),
+                                    onClick = {
+                                        showDialog = true
+                                        currentTask = tas
+                                        dialogState = DialogState.EDIT
+                                    }) {
+                                    Text(text = "Edit")
+                                }
+                                Button(
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .padding(10.dp),
+                                    onClick = {
+                                        taskViewModel.deleteUser(tas)
+                                    }) {
+                                    Text(text = "Delete")
+                                }
+                            }
+                        }
+                    }
                 }
             }
 
@@ -234,6 +277,8 @@ class MainActivity : ComponentActivity() {
                     .padding(10.dp),
                 onClick = {
                     showDialog = true
+                    dialogState = DialogState.CREATE
+//                    TaskBroadcastReceiver.sendNotf(this@MainActivity, Task())
                 },
                 backgroundColor = Color.Red,
                 contentColor = Color.White,
@@ -244,6 +289,8 @@ class MainActivity : ComponentActivity() {
 
             if (showDialog) {
                 var taskNameText by remember { mutableStateOf(TextFieldValue()) }
+                var tName by remember { mutableStateOf("") }
+                var tDescription by remember { mutableStateOf("") }
                 var isChecked by remember { mutableStateOf(false) }
                 var taskreminderDate by remember {
                     mutableStateOf("")
@@ -256,11 +303,24 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("")
                 }
 
+                val mTime = remember { mutableStateOf("") }
+
                 var taskDescriptionText by remember {
                     mutableStateOf(
                         TextFieldValue()
                     )
                 }
+                if (dialogState.equals(DialogState.EDIT)) {
+                    tName = currentTask.taskName
+                    tDescription = getTaskDescription(currentTask.taskDescription)
+                    isChecked = getTaskPriorityValue(currentTask.taskPriority)
+                    taskreminderDate = currentTask.taskDueDate
+                    taskreminderTime = currentTask.taskDueTime
+                } else {
+                    currentTask = Task()
+                }
+
+
                 var alertDialogContext = LocalContext.current
                 AlertDialog(
                     onDismissRequest = { showDialog = false },
@@ -270,14 +330,14 @@ class MainActivity : ComponentActivity() {
                         Column {
 
                             TextField(
-                                value = taskNameText,
-                                onValueChange = { taskNameText = it },
+                                value = tName,
+                                onValueChange = { tName = it },
                                 label = { Text(text = "Task Name") }
                             )
 
                             TextField(
-                                value = taskDescriptionText,
-                                onValueChange = { taskDescriptionText = it },
+                                value = tDescription,
+                                onValueChange = { tDescription = it },
                                 label = { Text(text = "Task Description") }
                             )
 
@@ -316,6 +376,10 @@ class MainActivity : ComponentActivity() {
 
                                 val mDate = remember { mutableStateOf("") }
 
+                                /* if(dialogState.equals(DialogState.EDIT)){
+                                     mDate.value = currentTask.taskDueDate
+                                 }*/
+
                                 val mDatePickerDialog = DatePickerDialog(
                                     mContext,
                                     { _: DatePicker, mYear: Int, mMonth: Int, mDayOfMonth: Int ->
@@ -328,6 +392,9 @@ class MainActivity : ComponentActivity() {
                                         var calDate = calendarToDate(cal)
                                         var dateString = dateToString(calDate, "dd-MM-yyyy")
                                         mDate.value = dateString
+                                        taskreminderDate = mDate.value
+                                        if (dialogState.equals(DialogState.EDIT))
+                                            currentTask.taskDueDate = dateString
                                     }, mYear, mMonth, mDay
                                 )
 
@@ -341,14 +408,14 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Text(text = "Reminder date")
                                 }
-                                taskreminderDate = mDate.value
+
 
                                 Text(
                                     modifier = Modifier
                                         .weight(1f)
                                         .padding(10.dp),
                                     textAlign = TextAlign.Center,
-                                    text = mDate.value
+                                    text = taskreminderDate
                                 )
                             }
 
@@ -363,22 +430,26 @@ class MainActivity : ComponentActivity() {
                                 val mMinute = mCalendar[Calendar.MINUTE]
 
                                 // Value for storing time as a string
-                                val mTime = remember { mutableStateOf("") }
 
                                 // Creating a TimePicker dialod
                                 val mTimePickerDialog = TimePickerDialog(
                                     mContext,
                                     { _, mHour: Int, mMinute: Int ->
                                         var cal = Calendar.getInstance()
-                                        cal[Calendar.HOUR] = mHour
+                                        cal[Calendar.HOUR_OF_DAY] = mHour
                                         cal[Calendar.MINUTE] = mMinute
 
                                         var calTime = calendarToDate(cal)
                                         var calString = dateToString(calTime, "HH : mm")
                                         mTime.value = calString
+                                        taskreminderTime = mTime.value
+
                                     }, mHour, mMinute, false
                                 )
 
+                                if (dialogState.equals(DialogState.EDIT)) {
+                                    currentTask.taskDueTime = mTime.value
+                                }
 
                                 Button(
                                     onClick = {
@@ -392,7 +463,6 @@ class MainActivity : ComponentActivity() {
                                 ) {
                                     Text(text = "Reminder time")
                                 }
-                                taskreminderTime = mTime.value
 
                                 Text(
                                     modifier = Modifier
@@ -400,7 +470,7 @@ class MainActivity : ComponentActivity() {
                                         .weight(1f)
                                         .padding(10.dp),
                                     textAlign = TextAlign.Center,
-                                    text = mTime.value
+                                    text = taskreminderTime
                                 )
                             }
 
@@ -410,8 +480,8 @@ class MainActivity : ComponentActivity() {
                     confirmButton = {
                         Button(
                             onClick = {
-                                var taskname = taskNameText.text
-                                var taskDescription = taskDescriptionText.text
+                                var taskname = tName
+                                var taskDescription = tDescription
                                 var taskPriority = getTaskPriority(isChecked)
                                 var reminderDate = taskreminderDate
                                 var reminderTime = taskreminderTime
@@ -428,8 +498,14 @@ class MainActivity : ComponentActivity() {
                                                         taskDueDate = reminderDate,
                                                         taskDueTime = taskreminderTime
                                                     )
+                                                    if (dialogState.equals(DialogState.CREATE))
+                                                        taskViewModel.insertTask(saveTask)
+                                                    else {
+                                                        saveTask.taskId = currentTask.taskId
+                                                        taskViewModel.updateUser(saveTask)
+                                                    }
 
-//                                                    taskViewModel.insertTask(saveTask)
+                                                    testNotif(alertDialogContext,saveTask)
                                                     /*setAlarm(
                                                         task = saveTask,
                                                         context = alertDialogContext
@@ -473,6 +549,8 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+
+
     fun getTaskPriority(isChecked: Boolean): TaskPriority {
         if (isChecked) {
             return TaskPriority.HIGHPRORITY
@@ -487,7 +565,6 @@ class MainActivity : ComponentActivity() {
         val context = LocalContext.current
         Toast.makeText(context, message, Toast.LENGTH_SHORT).show()
     }
-
 
 
     @RequiresApi(Build.VERSION_CODES.O)
@@ -542,48 +619,21 @@ fun stringToDate(dateString: String): Date {
     return date
 }
 
-fun testNotif(context: Context, task: Task) {
-    val alarmIntent = Intent(context, TaskBroadcastReceiver::class.java)
 
-    val bundle = Bundle().apply {
-        putSerializable("taskobj", task)
+
+fun getTaskDescription(taskDescription: String?): String {
+    if (taskDescription.isNullOrEmpty()) {
+        return ""
     }
-    alarmIntent.putExtra("bundle", bundle)
-
-    val pendingIntent = PendingIntent.getBroadcast(
-        context,
-        task.taskId.toInt(),
-        alarmIntent,
-        PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE
-    )
-
-    val manager =
-        context.getSystemService(ALARM_SERVICE) as? AlarmManager
-    val calendar = Calendar.getInstance()
-    calendar.timeInMillis = System.currentTimeMillis()
-
-    var taskDateString = task.taskDueDate + " " + task.taskDueTime
-    var taskDate = stringToDate(taskDateString)
-
-    var year = Integer.parseInt(dateToString(taskDate, "yyyy"))
-    var month = Integer.parseInt(dateToString(taskDate, "MM"))
-    var day = Integer.parseInt(dateToString(taskDate, "dd"))
-    var hour = Integer.parseInt(dateToString(taskDate, "HH"))
-    var min = Integer.parseInt(dateToString(taskDate, "mm"))
-
-
-//    calendar[Calendar.YEAR] = year
-//    calendar[Calendar.MONTH] = month
-//    calendar[Calendar.DAY_OF_MONTH] = day
-    calendar[Calendar.HOUR_OF_DAY] = 23
-    calendar[Calendar.MINUTE] = 59
-    calendar[Calendar.SECOND] = 10
-
-    manager!!.setExact(
-        AlarmManager.RTC_WAKEUP, calendar.timeInMillis, pendingIntent
-    )
+    return taskDescription
 }
 
+fun getTaskPriorityValue(taskPriority: TaskPriority): Boolean {
+    if (taskPriority.equals(TaskPriority.HIGHPRORITY)) {
+        return true
+    }
+    return false
+}
 /*
 fun setAlarm(task: Task, context: Context) {
 
